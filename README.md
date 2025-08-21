@@ -1,89 +1,171 @@
-# WeatherView Application
+# WeatherView - Weather App with Supabase Integration
 
-A beautiful, responsive weather application that displays current weather conditions with intuitive visual scales.
+A beautiful weather application that displays detailed weather conditions with visual scales and saves all weather queries to a Supabase database for history tracking.
 
 ## Features
 
-- **Real-time Weather Data**: Get current weather conditions by entering a US zipcode
-- **Visual Weather Scales**: Interactive 5-point scales for temperature, wind speed, and humidity
-- **Temperature Conversion**: Toggle between Celsius and Fahrenheit with smooth animations
-- **Responsive Design**: Optimized for desktop, tablet, and mobile devices
-- **Error Handling**: Comprehensive error messages for invalid inputs and API issues
+- 🌤️ **Real-time Weather Data**: Get current weather conditions by zipcode
+- 📊 **Visual Weather Scales**: Beautiful visual representations of temperature, wind, and humidity
+- 🌡️ **Temperature Unit Toggle**: Switch between Celsius and Fahrenheit
+- 📝 **Weather History**: View and manage your previous weather queries
+- 📈 **Statistics Dashboard**: See usage statistics and trends
+- 💾 **Database Integration**: All queries are automatically saved to Supabase
+- 🎨 **Modern UI**: Beautiful gradient design with Tailwind CSS
+
+## Tech Stack
+
+- **Frontend**: React 18 + TypeScript + Vite
+- **Styling**: Tailwind CSS
+- **Icons**: Lucide React
+- **Database**: Supabase (PostgreSQL)
+- **Weather API**: OpenWeatherMap
+
+## Prerequisites
+
+- Node.js (v16 or higher)
+- A Supabase account
+- An OpenWeatherMap API key
 
 ## Setup Instructions
 
-### 1. Get OpenWeatherMap API Key
-
-1. Visit [OpenWeatherMap](https://openweathermap.org/api)
-2. Sign up for a free account
-3. Navigate to the API keys section in your account dashboard
-4. Copy your API key
-
-### 2. Configure Environment Variables
-
-1. Copy the `.env.example` file to `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-
-2. Open the `.env` file and replace `your_api_key_here` with your actual OpenWeatherMap API key:
-   ```
-   VITE_OPENWEATHER_API_KEY=your_actual_api_key_here
-   ```
-
-### 3. Install Dependencies and Run
+### 1. Clone and Install Dependencies
 
 ```bash
+git clone <your-repo-url>
+cd WeatherDemo
 npm install
+```
+
+### 2. Set Up Supabase
+
+1. Go to [Supabase](https://supabase.com) and create a new project
+2. Once your project is created, go to the **SQL Editor**
+3. Copy and paste the contents of `supabase-schema.sql` into the editor
+4. Run the SQL to create the database schema
+5. Go to **Settings** > **API** to get your project URL and anon key
+
+### 3. Set Up Environment Variables
+
+Create a `.env` file in the root directory:
+
+```env
+VITE_OPENWEATHER_API_KEY=your_openweather_api_key_here
+VITE_SUPABASE_URL=your_supabase_project_url_here
+VITE_SUPABASE_ANON_KEY=your_supabase_anon_key_here
+```
+
+### 4. Get OpenWeatherMap API Key
+
+1. Go to [OpenWeatherMap](https://openweathermap.org/api)
+2. Sign up for a free account
+3. Get your API key from your account dashboard
+4. Add it to your `.env` file
+
+### 5. Run the Application
+
+```bash
 npm run dev
 ```
 
 The application will be available at `http://localhost:5173`
 
-## Usage
+## Database Schema
 
-1. Enter a valid US zipcode (e.g., 10001, 90210, 60601)
-2. Click the search button or press Enter
-3. View the weather data displayed on interactive visual scales
-4. Use the temperature toggle to switch between Celsius and Fahrenheit
-5. Each weather attribute shows its intensity through highlighted icons
+The application uses a single table `weather_queries` with the following structure:
 
-## Weather Scales
+```sql
+CREATE TABLE weather_queries (
+  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+  zipcode VARCHAR(10) NOT NULL,
+  temperature_celsius DECIMAL(5,2) NOT NULL,
+  temperature_fahrenheit DECIMAL(5,2) NOT NULL,
+  wind_speed_kmh DECIMAL(5,2) NOT NULL,
+  humidity INTEGER NOT NULL,
+  description TEXT NOT NULL,
+  city VARCHAR(100) NOT NULL,
+  country VARCHAR(3) NOT NULL,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW() NOT NULL
+);
+```
 
-### Temperature Scale
-- **Very Cold**: Below 0°C (32°F) - Snowflake icon
-- **Cold**: 0-10°C (32-50°F) - Cloud with snow icon
-- **Mild**: 10-20°C (50-68°F) - Cloud icon
-- **Warm**: 20-30°C (68-86°F) - Partial sun icon
-- **Hot**: Above 30°C (86°F) - Full sun icon
+## Features in Detail
 
-### Wind Speed Scale
-- **Calm**: 0-5 km/h - Leaf icon
-- **Light Breeze**: 5-15 km/h - Wind icon
-- **Moderate**: 15-30 km/h - Cloudy icon
-- **Strong**: 30-50 km/h - Drizzle icon
-- **Very Strong**: Above 50 km/h - Tornado icon
+### Weather History
+- View all your previous weather queries
+- Click on any history item to re-search that location
+- Delete individual queries
+- See statistics including total queries, unique zipcodes, average temperature, and most searched city
 
-### Humidity Scale
-- **Very Dry**: 0-20% - Sun icon
-- **Dry**: 20-40% - Cloud icon
-- **Moderate**: 40-60% - Clouds icon
-- **Humid**: 60-80% - Rain icon
-- **Very Humid**: Above 80% - Heavy rain icon
+### Visual Weather Scales
+- Temperature scale with color-coded ranges
+- Wind speed scale with descriptive labels
+- Humidity scale with visual indicators
 
-## Technologies Used
+### Database Operations
+- **Automatic Saving**: Every weather query is automatically saved to the database
+- **History Retrieval**: Load recent queries with statistics
+- **Search by Zipcode**: Find all queries for a specific zipcode
+- **Search by City**: Find all queries for a specific city
+- **Delete Operations**: Remove individual queries from history
 
-- React 18 with TypeScript
-- Tailwind CSS for styling
-- Lucide React for icons
-- OpenWeatherMap API for weather data
-- Vite for development and building
+## API Endpoints Used
 
-## API Information
+The application uses the following Supabase operations:
 
-This application uses the OpenWeatherMap Current Weather Data API. The free tier includes:
-- 1,000 API calls per day
-- Current weather data
-- 5-day weather forecast (not used in this app)
+- `INSERT` - Save new weather queries
+- `SELECT` - Retrieve weather history and statistics
+- `DELETE` - Remove queries from history
+- `COUNT` - Calculate statistics
 
-For more information, visit the [OpenWeatherMap API documentation](https://openweathermap.org/current).
+## Security Considerations
+
+- Row Level Security (RLS) is enabled on the `weather_queries` table
+- For demo purposes, all operations are allowed
+- In production, consider implementing user authentication and proper RLS policies
+
+## Troubleshooting
+
+### Common Issues
+
+1. **"Weather API key is not configured"**
+   - Make sure you've added `VITE_OPENWEATHER_API_KEY` to your `.env` file
+   - Verify your API key is correct
+
+2. **"Supabase configuration is missing"**
+   - Ensure `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are in your `.env` file
+   - Check that your Supabase project is active
+
+3. **"Invalid zipcode"**
+   - Make sure you're using a valid 5-digit US zipcode
+   - The OpenWeatherMap API only supports US zipcodes
+
+4. **Database connection errors**
+   - Verify your Supabase project is running
+   - Check that you've run the schema SQL in your Supabase SQL Editor
+   - Ensure your anon key has the correct permissions
+
+### Environment Variables Checklist
+
+Make sure your `.env` file contains:
+
+```env
+VITE_OPENWEATHER_API_KEY=your_openweather_api_key
+VITE_SUPABASE_URL=https://your-project-ref.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Test thoroughly
+5. Submit a pull request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+If you encounter any issues or have questions, please open an issue on the GitHub repository.

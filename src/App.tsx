@@ -1,17 +1,19 @@
 import React, { useState } from 'react';
-import { Cloud } from 'lucide-react';
+import { Cloud, History } from 'lucide-react';
 import { WeatherData, TemperatureUnit } from './types/weather';
 import { WeatherService } from './services/weatherService';
 import { WeatherInput } from './components/WeatherInput';
 import { WeatherDisplay } from './components/WeatherDisplay';
 import { TemperatureToggle } from './components/TemperatureToggle';
 import { LoadingSpinner } from './components/LoadingSpinner';
+import { WeatherHistory } from './components/WeatherHistory';
 
 function App() {
   const [weatherData, setWeatherData] = useState<WeatherData | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [temperatureUnit, setTemperatureUnit] = useState<TemperatureUnit>('celsius');
+  const [showHistory, setShowHistory] = useState(false);
 
   const handleSearch = async (zipcode: string) => {
     setLoading(true);
@@ -20,6 +22,15 @@ function App() {
     try {
       const data = await WeatherService.getWeatherByZipcode(zipcode);
       setWeatherData(data);
+      
+      // Save to database
+      try {
+        const { SupabaseService } = await import('./services/supabaseService');
+        await SupabaseService.saveWeatherQuery(zipcode, data);
+      } catch (dbError) {
+        console.error('Failed to save to database:', dbError);
+        // Don't show error to user for database issues, just log it
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An unexpected error occurred');
       setWeatherData(null);
@@ -30,6 +41,11 @@ function App() {
 
   const handleTemperatureToggle = (unit: TemperatureUnit) => {
     setTemperatureUnit(unit);
+  };
+
+  const handleHistorySelect = (zipcode: string) => {
+    setShowHistory(false);
+    handleSearch(zipcode);
   };
 
   return (
@@ -54,6 +70,24 @@ function App() {
             error={error}
           />
         </div>
+
+        {/* History Toggle Button */}
+        <div className="flex justify-center mb-6">
+          <button
+            onClick={() => setShowHistory(!showHistory)}
+            className="flex items-center space-x-2 px-4 py-2 bg-white/20 hover:bg-white/30 text-white rounded-lg transition-colors"
+          >
+            <History size={20} />
+            <span>{showHistory ? 'Hide History' : 'Show History'}</span>
+          </button>
+        </div>
+
+        {/* History Panel */}
+        {showHistory && (
+          <div className="mb-8">
+            <WeatherHistory onSelectQuery={handleHistorySelect} />
+          </div>
+        )}
 
         {/* Temperature Toggle */}
         {weatherData && (
