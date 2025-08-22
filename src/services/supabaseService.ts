@@ -79,7 +79,7 @@ export class SupabaseService {
       .limit(10);
 
     if (error) {
-      if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
+      if (error.code === 'PGRST116' || error.message?.includes('Could not find the table')) {
         console.warn('Database table not found. Please run the SQL schema in your Supabase dashboard.');
         return []; // Return empty array instead of throwing error
       }
@@ -198,7 +198,7 @@ export class SupabaseService {
       .sort(([,a], [,b]) => b - a)[0]?.[0] || 'N/A';
 
     if (error) {
-      if (error.code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+      if (error.code === 'PGRST116' || error.code === 'PGRST205' || error.message?.includes('Could not find the table')) {
         console.warn('Database table not found. Please run the SQL schema in your Supabase dashboard.');
         return {
           totalQueries: 0,
