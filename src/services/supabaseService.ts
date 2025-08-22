@@ -5,11 +5,19 @@ import { WeatherData } from '../types/weather';
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
 const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseAnonKey) {
-  throw new Error('Supabase configuration is missing. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.');
+let supabase: ReturnType<typeof createClient> | null = null;
+
+// Initialize Supabase client only if configuration is available
+if (supabaseUrl && supabaseAnonKey) {
+  supabase = createClient(supabaseUrl, supabaseAnonKey);
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+function ensureSupabaseConfigured() {
+  if (!supabase) {
+    throw new Error('Supabase configuration is missing. Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your .env file.');
+  }
+  return supabase;
+}
 
 export interface WeatherQuery {
   id: string;
@@ -29,7 +37,9 @@ export class SupabaseService {
    * Save weather query data to the database
    */
   static async saveWeatherQuery(zipcode: string, weatherData: WeatherData): Promise<WeatherQuery> {
-    const { data, error } = await supabase
+    const supabaseClient = ensureSupabaseConfigured();
+    
+    const { data, error } = await supabaseClient
       .from('weather_queries')
       .insert({
         zipcode,
@@ -56,7 +66,9 @@ export class SupabaseService {
    * Get recent weather queries (last 10)
    */
   static async getRecentWeatherQueries(): Promise<WeatherQuery[]> {
-    const { data, error } = await supabase
+    const supabaseClient = ensureSupabaseConfigured();
+    
+    const { data, error } = await supabaseClient
       .from('weather_queries')
       .select('*')
       .order('created_at', { ascending: false })
@@ -74,7 +86,9 @@ export class SupabaseService {
    * Get weather queries by zipcode
    */
   static async getWeatherQueriesByZipcode(zipcode: string): Promise<WeatherQuery[]> {
-    const { data, error } = await supabase
+    const supabaseClient = ensureSupabaseConfigured();
+    
+    const { data, error } = await supabaseClient
       .from('weather_queries')
       .select('*')
       .eq('zipcode', zipcode)
@@ -92,7 +106,9 @@ export class SupabaseService {
    * Get weather queries by city
    */
   static async getWeatherQueriesByCity(city: string): Promise<WeatherQuery[]> {
-    const { data, error } = await supabase
+    const supabaseClient = ensureSupabaseConfigured();
+    
+    const { data, error } = await supabaseClient
       .from('weather_queries')
       .select('*')
       .ilike('city', `%${city}%`)
@@ -110,7 +126,9 @@ export class SupabaseService {
    * Delete a weather query by ID
    */
   static async deleteWeatherQuery(id: string): Promise<void> {
-    const { error } = await supabase
+    const supabaseClient = ensureSupabaseConfigured();
+    
+    const { error } = await supabaseClient
       .from('weather_queries')
       .delete()
       .eq('id', id);
@@ -130,13 +148,15 @@ export class SupabaseService {
     averageTemperature: number;
     mostSearchedCity: string;
   }> {
+    const supabaseClient = ensureSupabaseConfigured();
+    
     // Get total queries
-    const { count: totalQueries } = await supabase
+    const { count: totalQueries } = await supabaseClient
       .from('weather_queries')
       .select('*', { count: 'exact', head: true });
 
     // Get unique zipcodes count
-    const { data: uniqueZipcodesData } = await supabase
+    const { data: uniqueZipcodesData } = await supabaseClient
       .from('weather_queries')
       .select('zipcode')
       .order('zipcode');
@@ -144,7 +164,7 @@ export class SupabaseService {
     const uniqueZipcodes = new Set(uniqueZipcodesData?.map(q => q.zipcode)).size;
 
     // Get average temperature
-    const { data: avgTempData } = await supabase
+    const { data: avgTempData } = await supabaseClient
       .from('weather_queries')
       .select('temperature_celsius');
 
@@ -153,7 +173,7 @@ export class SupabaseService {
       : 0;
 
     // Get most searched city
-    const { data: cityData } = await supabase
+    const { data: cityData } = await supabaseClient
       .from('weather_queries')
       .select('city');
 
