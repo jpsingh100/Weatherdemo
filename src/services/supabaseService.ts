@@ -55,6 +55,10 @@ export class SupabaseService {
       .single();
 
     if (error) {
+      if (error.code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+        console.warn('Database table not found. Please run the SQL schema in your Supabase dashboard.');
+        return; // Don't throw error, just log it
+      }
       console.error('Error saving weather query:', error);
       throw new Error('Failed to save weather query to database');
     }
@@ -75,6 +79,10 @@ export class SupabaseService {
       .limit(10);
 
     if (error) {
+      if (error.code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+        console.warn('Database table not found. Please run the SQL schema in your Supabase dashboard.');
+        return []; // Return empty array instead of throwing error
+      }
       console.error('Error fetching recent weather queries:', error);
       throw new Error('Failed to fetch recent weather queries');
     }
@@ -134,6 +142,10 @@ export class SupabaseService {
       .eq('id', id);
 
     if (error) {
+      if (error.code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+        console.warn('Database table not found. Please run the SQL schema in your Supabase dashboard.');
+        return; // Don't throw error, just log it
+      }
       console.error('Error deleting weather query:', error);
       throw new Error('Failed to delete weather query');
     }
@@ -184,6 +196,19 @@ export class SupabaseService {
 
     const mostSearchedCity = Object.entries(cityCounts)
       .sort(([,a], [,b]) => b - a)[0]?.[0] || 'N/A';
+
+    if (error) {
+      if (error.code === 'PGRST116' || error.message?.includes('Could not find the table')) {
+        console.warn('Database table not found. Please run the SQL schema in your Supabase dashboard.');
+        return {
+          totalQueries: 0,
+          uniqueZipcodes: 0,
+          averageTemperature: 0,
+          mostSearchedCity: 'N/A'
+        };
+      }
+      throw new Error(`Failed to fetch weather statistics`);
+    }
 
     return {
       totalQueries: totalQueries || 0,
